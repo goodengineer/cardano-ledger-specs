@@ -65,7 +65,6 @@ import Cardano.Ledger.Val
     encodeMint,
     isZero,
   )
-import Control.DeepSeq (NFData)
 import Data.Coders
 import Data.Maybe (fromMaybe)
 import Data.MemoBytes (Mem, MemoBytes (..), memoBytes)

@@ -572,9 +572,14 @@ language :: AlonzoScript.Script era -> Maybe Language
 language (AlonzoScript.NativeScript _) = Nothing
 language (AlonzoScript.PlutusScript) = Just PlutusV1
 
-evalScripts :: (AlonzoScript.Script era, [Data era], ExUnits, CostModel) -> Bool
-evalScripts (AlonzoScript.NativeScript _timelock, _, _, _) = True
-evalScripts (AlonzoScript.PlutusScript, ds, units, cost) = b
+evalScripts ::
+  [(AlonzoScript.Script era, [Data era], ExUnits, CostModel)] ->
+  Bool
+evalScripts [] = True
+evalScripts ((AlonzoScript.NativeScript _timelock, _, _, _) : rest) =
+  evalScripts rest
+evalScripts ((AlonzoScript.PlutusScript, ds, units, cost) : rest) =
+  b && evalScripts rest
   where
     (IsValidating b, _exunits) = runPLCScript cost AlonzoScript.PlutusScript ds units
 
