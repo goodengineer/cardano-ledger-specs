@@ -421,7 +421,7 @@ data Globals = Globals
 
 instance NoThunks Globals
 
-type ShelleyBase = ReaderT Globals Identity
+type ShelleyBase = ReaderT Globals IO
 
 data Network
   = Testnet

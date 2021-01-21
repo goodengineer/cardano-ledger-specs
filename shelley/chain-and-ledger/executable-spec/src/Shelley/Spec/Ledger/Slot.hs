@@ -24,8 +24,7 @@ import Cardano.Slotting.Block (BlockNo (..))
 import Cardano.Slotting.EpochInfo (EpochInfo)
 import qualified Cardano.Slotting.EpochInfo as EI
 import Cardano.Slotting.Slot (EpochNo (..), EpochSize (..), SlotNo (..))
-import Control.Monad.Trans (lift)
-import Data.Functor.Identity (Identity)
+import Data.Functor.Identity (Identity, runIdentity)
 import Data.Word (Word64)
 import GHC.Generics (Generic)
 import GHC.Stack (HasCallStack)
@@ -59,18 +58,18 @@ epochInfoEpoch ::
   EpochInfo Identity ->
   SlotNo ->
   ShelleyBase EpochNo
-epochInfoEpoch ei = lift . EI.epochInfoEpoch ei
+epochInfoEpoch ei = pure . runIdentity . EI.epochInfoEpoch ei
 
 epochInfoFirst ::
   HasCallStack =>
   EpochInfo Identity ->
   EpochNo ->
   ShelleyBase SlotNo
-epochInfoFirst ei = lift . EI.epochInfoFirst ei
+epochInfoFirst ei = pure . runIdentity . EI.epochInfoFirst ei
 
 epochInfoSize ::
   HasCallStack =>
   EpochInfo Identity ->
   EpochNo ->
   ShelleyBase EpochSize
-epochInfoSize ei = lift . EI.epochInfoSize ei
+epochInfoSize ei = pure . runIdentity . EI.epochInfoSize ei

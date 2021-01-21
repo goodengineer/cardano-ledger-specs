@@ -25,7 +25,7 @@ import Cardano.Ledger.Shelley (ShelleyEra)
 import Cardano.Ledger.Shelley.Constraints (ShelleyBased)
 import Control.Arrow (left)
 import Control.Monad.Except
-import Control.Monad.Trans.Reader (runReader)
+import Control.Monad.Trans.Reader (runReaderT)
 import Control.State.Transition.Extended
   ( BaseM,
     Environment,
@@ -47,6 +47,7 @@ import qualified Shelley.Spec.Ledger.STS.Ledgers as Ledgers
 import Shelley.Spec.Ledger.Slot (SlotNo)
 import Shelley.Spec.Ledger.Tx (Tx)
 
+import System.IO.Unsafe (unsafePerformIO)
 -- TODO #1304: add reapplyTxs
 class
   ( ChainData (Tx era),
@@ -169,7 +170,7 @@ applyTxsTransition ::
   m (MempoolState era)
 applyTxsTransition globals env txs state =
   let res =
-        flip runReader globals
+        unsafePerformIO . flip runReaderT globals
           . applySTS @(Core.EraRule "LEDGERS" era)
           $ TRC (env, state, txs)
    in liftEither

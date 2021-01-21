@@ -26,7 +26,7 @@ import Cardano.Ledger.Era (Crypto, Era)
 import Cardano.Ledger.Shelley (ShelleyEra)
 import Control.Arrow (left, right)
 import Control.Monad.Except
-import Control.Monad.Trans.Reader (runReader)
+import Control.Monad.Trans.Reader (runReaderT)
 import Control.State.Transition.Extended
 import GHC.Generics (Generic)
 import NoThunks.Class (NoThunks (..))
@@ -39,6 +39,8 @@ import qualified Shelley.Spec.Ledger.STS.Bbody as STS
 import qualified Shelley.Spec.Ledger.STS.Chain as STS
 import Shelley.Spec.Ledger.STS.EraMapping ()
 import Shelley.Spec.Ledger.Slot (SlotNo)
+
+import System.IO.Unsafe (unsafePerformIO)
 
 {-------------------------------------------------------------------------------
   Block validation API
@@ -81,7 +83,7 @@ class
     SlotNo ->
     NewEpochState era
   applyTick globals state hdr =
-    either err id . flip runReader globals
+    (either err id) . unsafePerformIO . flip runReaderT globals
       . applySTS @(Core.EraRule "TICK" era)
       $ TRC ((), state, hdr)
     where
@@ -108,7 +110,7 @@ class
       $ res
     where
       res =
-        flip runReader globals . applySTS @(Core.EraRule "BBODY" era) $
+        unsafePerformIO . flip runReaderT globals . applySTS @(Core.EraRule "BBODY" era) $
           TRC (mkBbodyEnv state, bbs, blk)
       bbs =
         STS.BbodyState
@@ -134,7 +136,7 @@ class
     updateNewEpochState state res
     where
       res =
-        flip runReader globals . reapplySTS @(Core.EraRule "BBODY" era) $
+        unsafePerformIO . flip runReaderT globals . reapplySTS @(Core.EraRule "BBODY" era) $
           TRC (mkBbodyEnv state, bbs, blk)
       bbs =
         STS.BbodyState

@@ -41,7 +41,7 @@ import Cardano.Ledger.Era (Crypto)
 import Cardano.Ledger.Shelley (ShelleyEra)
 import Control.Arrow (left, right)
 import Control.Monad.Except
-import Control.Monad.Trans.Reader (runReader)
+import Control.Monad.Trans.Reader (runReaderT)
 import Control.State.Transition.Extended
   ( BaseM,
     Environment,
@@ -90,7 +90,7 @@ import qualified Shelley.Spec.Ledger.STS.Tickn as STS.Tickn
 import Shelley.Spec.Ledger.Serialization (decodeRecordNamed)
 import Shelley.Spec.Ledger.Slot (SlotNo)
 
--- =======================================================
+import System.IO.Unsafe (unsafePerformIO)
 
 class
   ( CC.Crypto c,
@@ -252,7 +252,7 @@ futureView globals ss slot =
     $ res
   where
     res =
-      flip runReader globals
+      unsafePerformIO . flip runReaderT globals
         . applySTS @(Core.EraRule "TICKF" era)
         $ TRC ((), ss, slot)
 
@@ -324,7 +324,7 @@ tickChainDepState
       STS.Prtcl.PrtclState _ _ candidateNonce = csProtocol
       err = error "Panic! tickChainDepState failed."
       newTickState =
-        fromRight err . flip runReader globals
+        fromRight err . unsafePerformIO . flip runReaderT globals
           . applySTS @STS.Tickn.TICKN
           $ TRC
             ( STS.Tickn.TicknEnv
@@ -365,7 +365,7 @@ updateChainDepState
       $ res
     where
       res =
-        flip runReader globals
+        unsafePerformIO . flip runReaderT globals
           . applySTS @(STS.Prtcl.PRTCL crypto)
           $ TRC
             ( mkPrtclEnv lv epochNonce,
@@ -398,7 +398,7 @@ reupdateChainDepState
       }
     where
       res =
-        flip runReader globals
+        unsafePerformIO . flip runReaderT globals
           . reapplySTS @(STS.Prtcl.PRTCL crypto)
           $ TRC
             ( mkPrtclEnv lv epochNonce,

@@ -27,7 +27,7 @@ import Cardano.Ledger.Era (Crypto, Era)
 import Cardano.Ledger.Shelley.Constraints (UsesTxOut, UsesValue)
 import Cardano.Slotting.EpochInfo (epochInfoRange)
 import Cardano.Slotting.Slot (EpochSize, SlotNo)
-import Control.Monad.Trans.Reader (runReader)
+import Control.Monad.Trans.Reader (runReaderT)
 import Control.Provenance (runWithProvM)
 import Data.Default.Class (Default (..))
 import Data.Foldable (fold)
@@ -76,6 +76,8 @@ import Shelley.Spec.Ledger.STS.Tickn (TicknState (..))
 import Shelley.Spec.Ledger.Slot (epochInfoSize)
 import Shelley.Spec.Ledger.TxBody (PoolParams (..))
 import Shelley.Spec.Ledger.UTxO (UTxO (..))
+
+import System.IO.Unsafe (unsafePerformIO)
 
 -- | Get pool sizes, but in terms of total stake
 --
@@ -258,7 +260,7 @@ getRewardInfo ::
   NewEpochState era ->
   (RewardUpdate (Crypto era), RewardProvenance (Crypto era))
 getRewardInfo globals newepochstate =
-  runReader
+  unsafePerformIO $ runReaderT
     ( runWithProvM def $
         createRUpd slotsPerEpoch blocksmade epochstate maxsupply
     )
@@ -271,4 +273,4 @@ getRewardInfo globals newepochstate =
     blocksmade = nesBprev newepochstate
     epochnumber = nesEL newepochstate
     slotsPerEpoch :: EpochSize
-    slotsPerEpoch = runReader (epochInfoSize (epochInfo globals) epochnumber) globals
+    slotsPerEpoch = unsafePerformIO $ runReaderT (epochInfoSize (epochInfo globals) epochnumber) globals
