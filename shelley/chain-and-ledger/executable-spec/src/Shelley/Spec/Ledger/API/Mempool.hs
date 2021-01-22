@@ -168,6 +168,7 @@ applyTxsTransition ::
   Seq (Tx era) ->
   MempoolState era ->
   m (MempoolState era)
+{-# NOINLINE applyTxsTransition #-}
 applyTxsTransition globals env txs state =
   let res =
         unsafePerformIO . flip runReaderT globals

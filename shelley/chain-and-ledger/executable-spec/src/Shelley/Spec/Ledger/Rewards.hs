@@ -432,8 +432,8 @@ rewardOnePool
       poolRA = getRwdCred $ _poolRAcnt pool
       msg =
         case Map.lookup poolRA mRewards of
-          Nothing -> "MEMBER:NO"
-          Just c -> "MEMBER:YES " ++ show poolRA ++ " " ++ show c
+          Nothing -> "MEMBER:NO\n"
+          Just c -> "MEMBER:YES " ++ show poolRA ++ " " ++ show c ++ "\n"
       notPoolOwner (KeyHashObj hk) = hk `Set.notMember` _poolOwners pool
       notPoolOwner (ScriptHashObj _) = False
       lReward =
@@ -501,7 +501,7 @@ reward
                   (\x y -> if x == y then Nothing else Just (Coin $ unCoin y - unCoin x))
                   (fst case2)
                   (fst case1)
-    let msg = if delta == mempty then "LEADER:NO" else "LEADER:YES " ++ show delta
+    let msg = if delta == mempty then "LEADER:NO\n" else "LEADER:YES " ++ show delta ++ "\n"
     (lift . lift) (appendFile "/tmp/reward-aggregation" msg)
     if HardForks.aggregatedRewards pp
       then pure case1

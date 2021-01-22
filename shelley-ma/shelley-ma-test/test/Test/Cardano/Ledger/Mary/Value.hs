@@ -108,12 +108,14 @@ genID = fmap AssetName genB
 
 -- we want a limited number of AssetName and (ScriptHash C)
 assetChoices :: [AssetName]
+{-# NOINLINE assetChoices #-}
 assetChoices = unsafePerformIO (generate (vectorOf 8 genID))
 
 ass :: Int -> AssetName
 ass n = assetChoices !! n
 
 policyChoices :: [PolicyID C_Crypto]
+{-# NOINLINE policyChoices #-}
 policyChoices = unsafePerformIO (generate (vectorOf 8 (PolicyID <$> arbitrary)))
 
 pol :: Int -> PolicyID C_Crypto

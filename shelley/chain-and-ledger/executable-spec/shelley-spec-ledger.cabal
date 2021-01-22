@@ -100,6 +100,8 @@ library
     -Wincomplete-uni-patterns
     -Wredundant-constraints
     -Wpartial-fields
+    -fno-cse
+    -fno-full-laziness
   if (!flag(development))
     ghc-options:
       -Werror

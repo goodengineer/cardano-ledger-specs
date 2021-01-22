@@ -77,6 +77,7 @@ class
     NewEpochState era ->
     SlotNo ->
     NewEpochState era
+  {-# NOINLINE applyTick #-}
   default applyTick ::
     Globals ->
     NewEpochState era ->
@@ -97,6 +98,7 @@ class
     NewEpochState era ->
     Block era ->
     m (NewEpochState era)
+  {-# NOINLINE applyBlock #-}
   default applyBlock ::
     (MonadError (BlockTransitionError era) m) =>
     Globals ->
@@ -132,6 +134,7 @@ class
     NewEpochState era ->
     Block era ->
     NewEpochState era
+  {-# NOINLINE reapplyBlock #-}
   reapplyBlock globals state blk =
     updateNewEpochState state res
     where

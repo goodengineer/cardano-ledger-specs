@@ -259,6 +259,7 @@ getRewardInfo ::
   Globals ->
   NewEpochState era ->
   (RewardUpdate (Crypto era), RewardProvenance (Crypto era))
+{-# NOINLINE getRewardInfo #-}
 getRewardInfo globals newepochstate =
   unsafePerformIO $ runReaderT
     ( runWithProvM def $

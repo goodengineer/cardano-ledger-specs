@@ -245,6 +245,7 @@ futureView ::
   NewEpochState era ->
   SlotNo ->
   m (LedgerView (Crypto era))
+{-# NOINLINE futureView #-}
 futureView globals ss slot =
   liftEither
     . right view
@@ -315,6 +316,7 @@ tickChainDepState ::
   Bool ->
   ChainDepState crypto ->
   ChainDepState crypto
+{-# NOINLINE tickChainDepState #-}
 tickChainDepState
   globals
   LedgerView {lvExtraEntropy}
@@ -348,6 +350,7 @@ updateChainDepState ::
   BHeader crypto ->
   ChainDepState crypto ->
   m (ChainDepState crypto)
+{-# NOINLINE updateChainDepState #-}
 updateChainDepState
   globals
   lv
@@ -387,6 +390,7 @@ reupdateChainDepState ::
   BHeader crypto ->
   ChainDepState crypto ->
   ChainDepState crypto
+{-# NOINLINE reupdateChainDepState #-}
 reupdateChainDepState
   globals
   lv
