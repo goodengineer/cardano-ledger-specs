@@ -390,7 +390,7 @@ rewardOnePool ::
   ProvM
     (Map (KeyHash 'StakePool (Crypto era)) (RewardProvenancePool (Crypto era)))
     m
-    (Map (Credential 'Staking (Crypto era)) Coin)
+    (Map (Credential 'Staking (Crypto era)) Coin, String)
 rewardOnePool
   pp
   r
@@ -401,7 +401,7 @@ rewardOnePool
   sigma
   sigmaA
   (Coin totalStake)
-  addrsRew = (lift . lift) (appendFile "/tmp/reward-aggregation" msg) >> modifyM (Map.insert key provPool) >> pure rewards'
+  addrsRew = modifyM (Map.insert key provPool) >> pure (rewards', msg)
     where
       Coin ostake =
         Set.foldl'
@@ -432,8 +432,8 @@ rewardOnePool
       poolRA = getRwdCred $ _poolRAcnt pool
       msg =
         case Map.lookup poolRA mRewards of
-          Nothing -> "MEMBER:NO\n"
-          Just c -> "MEMBER:YES " ++ show poolRA ++ " " ++ show c ++ "\n"
+          Nothing -> ""
+          Just c -> "MEMBER " ++ show poolRA ++ " " ++ show c ++ "\n"
       notPoolOwner (KeyHashObj hk) = hk `Set.notMember` _poolOwners pool
       notPoolOwner (ScriptHashObj _) = False
       lReward =
@@ -495,23 +495,23 @@ reward
   (Coin totalStake)
   asc
   slotsPerEpoch = do
-    case1 <- foldListM (action (Map.unionWith (<>))) (Map.empty, Map.empty) (Map.toList poolParams)
-    case2 <- foldListM (action (Map.union)) (Map.empty, Map.empty) (Map.toList poolParams)
+    (m1a, m2a, sa) <- foldListM (action (Map.unionWith (<>))) (Map.empty, Map.empty, "") (Map.toList poolParams)
+    (m1b, m2b, _) <- foldListM (action (Map.union)) (Map.empty, Map.empty, "") (Map.toList poolParams)
     let delta = Map.differenceWith
                   (\x y -> if x == y then Nothing else Just (Coin $ unCoin y - unCoin x))
-                  (fst case2)
-                  (fst case1)
-    let msg = if delta == mempty then "LEADER:NO\n" else "LEADER:YES " ++ show delta ++ "\n"
-    (lift . lift) (appendFile "/tmp/reward-aggregation" msg)
+                  m1b
+                  m1a
+    let msg = if delta == mempty then "" else "LEADER: " ++ show delta ++ "\n"
+    (lift . lift) (appendFile "/tmp/reward-aggregation" (msg ++ sa))
     if HardForks.aggregatedRewards pp
-      then pure case1
-      else pure case2
+      then pure (m1a, m2a)
+      else pure (m1b, m2b)
     where
       totalBlocks = sum b
       Coin activeStake = fold . unStake $ stake
       -- We fold 'action' over the pairs in the poolParams Map to compute a pair of maps.
       -- we must use a right associative fold. See comments on foldListM below.
-      action f (hk, pparams) (m1, m2) = do
+      action f (hk, pparams) (m1, m2, msgacc) = do
         let blocksProduced = Map.lookup hk b
             actgr@(Stake s) = poolStake hk delegs stake
             Coin pstake = fold s
@@ -523,10 +523,11 @@ reward
                 (leaderProbability asc sigma (_d pp))
                 slotsPerEpoch
         case blocksProduced of
-          Nothing -> pure (m1, Map.insert hk ls m2)
+          Nothing -> pure (m1, Map.insert hk ls m2, "")
           Just n -> do
-            m <- rewardOnePool pp r n totalBlocks pparams actgr sigma sigmaA (Coin totalStake) addrsRew
-            pure (f m m1, Map.insert hk ls m2)
+            (m, s') <- rewardOnePool pp r n totalBlocks pparams actgr sigma sigmaA (Coin totalStake) addrsRew
+            let
+            pure (f m m1, Map.insert hk ls m2, msgacc ++ s')
 
 -- | Fold a monadic function 'accum' over a list. It is strict in its accumulating parameter.
 --   since the order matters in 'aggregate' (used in reward above) we need to use the same
