@@ -21,9 +21,21 @@ source-repository head
 library
   exposed-modules:
     Cardano.Ledger.Pivo
-  -- other-extensions:
+    Cardano.Ledger.Pivo.Rules.EraMapping
+    Cardano.Ledger.Pivo.Rules.Utxo
+    Cardano.Ledger.Pivo.Rules.Utxow
   build-depends:
     base >=4.9 && <4.15,
+    containers,
+    deepseq,
+    nothunks,
+    transformers,
+    -- Cardano related deps.
+    cardano-prelude,
+    cardano-binary,
+    cardano-crypto-class,
+    cardano-slotting,
+    small-steps,
     shelley-spec-ledger,
     cardano-ledger-shelley-ma
   hs-source-dirs: src
