@@ -62,6 +62,9 @@ instance
 instance Shelley.API.PraosCrypto c => Shelley.API.ApplyTx (PivoEra c)
 instance Shelley.API.PraosCrypto c => Shelley.API.ApplyBlock (PivoEra c)
 instance Shelley.API.PraosCrypto c => Shelley.API.GetLedgerView (PivoEra c)
+
+-- ShelleyBasedEra should provide all the instances consensus integration will
+-- rely on.
 instance Shelley.API.PraosCrypto c => Shelley.API.ShelleyBasedEra (PivoEra c)
 
 --------------------------------------------------------------------------------
