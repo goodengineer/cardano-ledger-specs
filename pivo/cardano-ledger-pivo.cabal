@@ -21,6 +21,8 @@ source-repository head
 library
   exposed-modules:
     Cardano.Ledger.Pivo
+    Cardano.Ledger.Pivo.TxBody
+    Cardano.Ledger.Pivo.Rules
     Cardano.Ledger.Pivo.Rules.Utxo
     Cardano.Ledger.Pivo.Rules.Utxow
   build-depends:
