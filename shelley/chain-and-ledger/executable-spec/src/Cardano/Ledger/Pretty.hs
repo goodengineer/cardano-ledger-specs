@@ -25,6 +25,7 @@ import qualified Cardano.Ledger.Core as Core
 import Cardano.Ledger.Crypto (Crypto)
 import Cardano.Ledger.Era (Era)
 import Cardano.Ledger.SafeHash (SafeHash, extractHash)
+import Cardano.Ledger.Shelley.Constraints (UsesPParams (PParamsDelta))
 import Codec.Binary.Bech32
 import Control.Monad.Identity (Identity)
 import Control.SetAlgebra (forwards)
@@ -330,7 +331,10 @@ class PrettyA t where
 
 -- | Constraints needed to ensure that the ledger state can be pretty printed.
 type CanPrettyPrintLedgerState era =
-  (PrettyA (Core.TxOut era), PrettyA (State (Core.EraRule "PPUP" era)))
+  ( PrettyA (Core.TxOut era),
+    PrettyA (Core.PParams era),
+    PrettyA (State (Core.EraRule "PPUP" era))
+  )
 
 ppAccountState :: AccountState -> PDoc
 ppAccountState (AccountState tr re) =
@@ -374,7 +378,7 @@ ppInstantaneousRewards (InstantaneousRewards res treas) =
 ppIx :: Ix -> PDoc
 ppIx x = viaShow x
 
-ppPPUPState :: PPUPState era -> PDoc
+ppPPUPState :: PrettyA (PParamsDelta era) => PPUPState era -> PDoc
 ppPPUPState (PPUPState p fp) =
   ppRecord
     "Proposed PPUPState"
@@ -425,8 +429,8 @@ ppEpochState (EpochState acnt snap ls prev pp non) =
     [ ("accountState", ppAccountState acnt),
       ("snapShots", ppSnapShots snap),
       ("ledgerState", ppLedgerState ls),
-      ("prevPoolParams", ppPParams prev),
-      ("pooParams", ppPParams pp),
+      ("prevPParams", prettyA prev),
+      ("currentPParams", prettyA pp),
       ("nonMyopic", ppNonMyopic non)
     ]
 
@@ -467,7 +471,11 @@ instance
   where
   prettyA = ppLedgerState
 
-instance PrettyA (PPUPState era) where prettyA = ppPPUPState
+instance
+  PrettyA (PParamsDelta era) =>
+  PrettyA (PPUPState era)
+  where
+  prettyA = ppPPUPState
 
 instance PrettyA (PState crypto) where prettyA = ppPState
 
@@ -740,6 +748,7 @@ ppDCert (DCertMir x) = ppSexp "DCertMir" [ppMIRCert x]
 
 ppTxBody ::
   PrettyA (Core.TxOut era) =>
+  PrettyA (PParamsDelta era) =>
   TxBody era ->
   PDoc
 ppTxBody (TxBodyConstr (Memo (TxBodyRaw ins outs cs wdrls fee ttl upd mdh) _)) =
@@ -790,7 +799,7 @@ instance PrettyA (MIRCert c) where prettyA = ppMIRCert
 instance PrettyA (DCert c) where prettyA = ppDCert
 
 instance
-  PrettyA (Core.TxOut era) =>
+  (PrettyA (Core.TxOut era), PrettyA (PParamsDelta era)) =>
   PrettyA (TxBody era)
   where
   prettyA = ppTxBody
@@ -873,20 +882,27 @@ ppPParamsUpdate (PParams feeA feeB mbb mtx mbh kd pd em no a0 rho tau d ex pv mu
   where
     lift pp x = ppStrictMaybe pp x
 
-ppUpdate :: Update era -> PDoc
+ppUpdate :: PrettyA (PParamsDelta era) => Update era -> PDoc
 ppUpdate (Update prop epn) = ppSexp "Update" [ppProposedPPUpdates prop, ppEpochNo epn]
 
-ppProposedPPUpdates :: ProposedPPUpdates era -> PDoc
-ppProposedPPUpdates (ProposedPPUpdates m) = ppMap ppKeyHash ppPParamsUpdate m
+ppProposedPPUpdates :: PrettyA (PParamsDelta era) => ProposedPPUpdates era -> PDoc
+ppProposedPPUpdates (ProposedPPUpdates m) = ppMap ppKeyHash prettyA m
 
 ppPPUpdateEnv :: PPUpdateEnv c -> PDoc
-ppPPUpdateEnv (PPUpdateEnv slot gd) = ppSexp "PPUpdateEnv" [ppSlotNo slot, ppGenDelegs gd]
+ppPPUpdateEnv (PPUpdateEnv slot gd) =
+  ppSexp
+    "PPUpdateEnv"
+    [ppSlotNo slot, ppGenDelegs gd]
 
 instance PrettyA (PPUpdateEnv c) where prettyA = ppPPUpdateEnv
 
-instance PrettyA (ProposedPPUpdates e) where prettyA = ppProposedPPUpdates
+instance
+  PrettyA (PParamsDelta e) =>
+  PrettyA (ProposedPPUpdates e)
+  where
+  prettyA = ppProposedPPUpdates
 
-instance PrettyA (Update e) where prettyA = ppUpdate
+instance PrettyA (PParamsDelta e) => PrettyA (Update e) where prettyA = ppUpdate
 
 instance PrettyA (PParams' StrictMaybe e) where prettyA = ppPParamsUpdate
 
