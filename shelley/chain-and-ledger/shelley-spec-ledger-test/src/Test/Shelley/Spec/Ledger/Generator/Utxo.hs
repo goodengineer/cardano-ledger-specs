@@ -272,6 +272,7 @@ genTx
       (draftTxBody, additionalScripts) <-
         genEraTxBody
           ge
+          pparams
           slot
           (Set.fromList inputs)
           draftOutputs

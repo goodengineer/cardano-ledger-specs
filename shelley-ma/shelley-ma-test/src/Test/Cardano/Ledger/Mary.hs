@@ -22,6 +22,7 @@ import Cardano.Ledger.Mary.Value
     policies,
   )
 import Cardano.Ledger.Shelley.Constraints (UsesAuxiliary, UsesValue)
+import Cardano.Ledger.ShelleyMA.Rules.Utxo (scaledMinDeposit)
 import Cardano.Ledger.ShelleyMA.Timelocks (Timelock (..))
 import Cardano.Ledger.ShelleyMA.TxBody (StrictMaybe, TxBody (..))
 import qualified Cardano.Ledger.Val as Val
@@ -29,12 +30,12 @@ import Cardano.Slotting.Slot (SlotNo)
 import qualified Data.ByteString.Char8 as BS
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Sequence.Strict (StrictSeq (..), (<|))
+import Data.Sequence.Strict (StrictSeq (..), (<|), (><))
 import qualified Data.Sequence.Strict as StrictSeq
 import qualified Data.Set as Set
 import Shelley.Spec.Ledger.BaseTypes (StrictMaybe (..))
 import Shelley.Spec.Ledger.Coin (Coin (..))
-import Shelley.Spec.Ledger.PParams (Update)
+import Shelley.Spec.Ledger.PParams (PParams, PParams' (..), Update)
 import Shelley.Spec.Ledger.Tx (TxIn, TxOut (..), hashScript)
 import Shelley.Spec.Ledger.TxBody (DCert, Wdrl)
 import Test.Cardano.Ledger.Allegra
@@ -228,18 +229,24 @@ genMint = do
 -- END Permissionless Tokens --
 -------------------------------
 
--- | Add tokens to a non-empty list of transaction outputs.
--- NOTE: this function will raise an error if given an empty sequence.
-addTokensToFirstOutput ::
+-- | Attempt to Add tokens to a non-empty list of transaction outputs.
+-- It will add them to the first output that has enough lovelace
+-- to meet the minUTxO requirment, if such an output exists.
+addTokens ::
   ( Core.Value era ~ Value (Crypto era),
     EraGen era
   ) =>
+  PParams era ->
   Value (Crypto era) ->
   StrictSeq (TxOut era) ->
-  StrictSeq (TxOut era)
-addTokensToFirstOutput ts ((TxOut a v) :<| os) = TxOut a (v <> ts) <| os
-addTokensToFirstOutput _ StrictSeq.Empty =
-  error "addTokensToFirstOutput was given an empty sequence"
+  Maybe (StrictSeq (TxOut era))
+addTokens = addTokens' StrictSeq.Empty
+  where
+    addTokens' tooLittleLovelace pparams ts (o@(TxOut a v) :<| os) =
+      if Val.coin v < scaledMinDeposit v (_minUTxOValue pparams)
+        then addTokens' (o :<| tooLittleLovelace ) pparams ts os
+        else (Just $ tooLittleLovelace >< TxOut a (v <> ts) <| os)
+    addTokens' _ _ _ StrictSeq.Empty = Nothing
 
 genTxBody ::
   forall era.
@@ -248,6 +255,7 @@ genTxBody ::
     UsesAuxiliary era,
     EraGen era
   ) =>
+  PParams era ->
   SlotNo ->
   Set.Set (TxIn (Crypto era)) ->
   StrictSeq (TxOut era) ->
@@ -257,10 +265,12 @@ genTxBody ::
   StrictMaybe (Update era) ->
   StrictMaybe (AuxiliaryDataHash (Crypto era)) ->
   Gen (TxBody era, [Timelock (Crypto era)])
-genTxBody slot ins outs cert wdrl fee upd meta = do
+genTxBody pparams slot ins outs cert wdrl fee upd meta = do
   validityInterval <- genValidityInterval slot
   mint <- genMint
-  let outs' = addTokensToFirstOutput (mint) outs
+  let (mint', outs') = case addTokens pparams mint outs of
+                         Nothing -> (mempty, outs)
+                         Just os -> (mint, os)
       ps = map (\p -> (Map.!) policyIndex p) (Set.toList $ policies mint)
   pure $
     ( TxBody
@@ -272,7 +282,7 @@ genTxBody slot ins outs cert wdrl fee upd meta = do
         validityInterval
         upd
         meta
-        mint,
+        mint',
       ps -- These additional scripts are for the minting policies.
     )
 
