@@ -15,8 +15,8 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
-
-{-# OPTIONS_GHC  -fno-warn-orphans #-} -- This is needed to make Plutus.Data instances
+-- This is needed to make Plutus.Data instances
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Cardano.Ledger.Alonzo.Data
   ( Data (Data, ..),
@@ -38,13 +38,13 @@ import Cardano.Ledger.Era (Crypto, Era)
 import Cardano.Ledger.Pretty
   ( PDoc,
     PrettyA (..),
-    ppMetadata,
-    ppSet,
-    ppSexp,
     ppInteger,
     ppList,
-    ppPair,
     ppLong,
+    ppMetadata,
+    ppPair,
+    ppSet,
+    ppSexp,
   )
 import Cardano.Ledger.SafeHash
   ( EraIndependentAuxiliaryData,
@@ -59,10 +59,11 @@ import Data.MemoBytes (Mem, MemoBytes (..), memoBytes)
 import Data.Set (Set)
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
-import NoThunks.Class (InspectHeapNamed (..), NoThunks)
-import Shelley.Spec.Ledger.Metadata (Metadata)
 -- import Plutus.V1.Ledger.Scripts
 import qualified Language.PlutusTx as Plutus
+import NoThunks.Class (InspectHeapNamed (..), NoThunks)
+import Shelley.Spec.Ledger.Metadata (Metadata)
+
 -- import qualified Shelley.Spec.Ledger.Metadata as Ledger
 
 -- =====================================================================
@@ -71,23 +72,24 @@ import qualified Language.PlutusTx as Plutus
 -- instances to also work in the ledger.
 
 instance FromCBOR (Annotator Plutus.Data) where
-  fromCBOR = decode(Summands "PlutusData" decPlutus)
-    where decPlutus :: Word -> Decode 'Open (Annotator Plutus.Data)
-          decPlutus 0 = Ann(SumD Plutus.Constr) <*! (Ann From) <*! fromListA From
-          decPlutus 1 = Ann(SumD Plutus.Map) <*! fromListA (fromPairAA From From)
-          decPlutus 2 = Ann(SumD Plutus.List) <*! fromListA From
-          decPlutus 3 = Ann(SumD Plutus.I <! From)
-          decPlutus 4 = Ann(SumD Plutus.B <! From)
-          decPlutus n = Invalid n
+  fromCBOR = decode (Summands "PlutusData" decPlutus)
+    where
+      decPlutus :: Word -> Decode 'Open (Annotator Plutus.Data)
+      decPlutus 0 = Ann (SumD Plutus.Constr) <*! (Ann From) <*! fromListA From
+      decPlutus 1 = Ann (SumD Plutus.Map) <*! fromListA (fromPairAA From From)
+      decPlutus 2 = Ann (SumD Plutus.List) <*! fromListA From
+      decPlutus 3 = Ann (SumD Plutus.I <! From)
+      decPlutus 4 = Ann (SumD Plutus.B <! From)
+      decPlutus n = Invalid n
 
 instance ToCBOR Plutus.Data where
-   toCBOR x = encode (encPlutus x)
-      where encPlutus (Plutus.Constr tag args) = Sum Plutus.Constr 0 !> To tag !> toList args
-            encPlutus (Plutus.Map pairs) = Sum Plutus.Map 1 !> toList pairs
-            encPlutus (Plutus.List xs) = Sum Plutus.List 2 !> toList xs
-            encPlutus (Plutus.I i) = Sum Plutus.I 3 !> To i
-            encPlutus (Plutus.B bytes) = Sum Plutus.B 4 !> To bytes
-
+  toCBOR x = encode (encPlutus x)
+    where
+      encPlutus (Plutus.Constr tag args) = Sum Plutus.Constr 0 !> To tag !> toList args
+      encPlutus (Plutus.Map pairs) = Sum Plutus.Map 1 !> toList pairs
+      encPlutus (Plutus.List xs) = Sum Plutus.List 2 !> toList xs
+      encPlutus (Plutus.I i) = Sum Plutus.I 3 !> To i
+      encPlutus (Plutus.B bytes) = Sum Plutus.B 4 !> To bytes
 
 deriving instance NoThunks Plutus.Data
 
@@ -221,10 +223,9 @@ pattern AuxiliaryData {scripts, dats, txMD} <-
 
 -- =======================================================
 
-
 ppPlutusData :: Plutus.Data -> PDoc
-ppPlutusData (Plutus.Constr tag args) =  ppSexp "Constr" [ppInteger tag,ppList ppPlutusData args]
-ppPlutusData (Plutus.Map pairs) =  ppSexp "Map" [ppList (ppPair ppPlutusData ppPlutusData) pairs]
+ppPlutusData (Plutus.Constr tag args) = ppSexp "Constr" [ppInteger tag, ppList ppPlutusData args]
+ppPlutusData (Plutus.Map pairs) = ppSexp "Map" [ppList (ppPair ppPlutusData ppPlutusData) pairs]
 ppPlutusData (Plutus.List xs) = ppSexp "List" [ppList ppPlutusData xs]
 ppPlutusData (Plutus.I i) = ppSexp "I" [ppInteger i]
 ppPlutusData (Plutus.B bytes) = ppSexp "B" [ppLong bytes]
