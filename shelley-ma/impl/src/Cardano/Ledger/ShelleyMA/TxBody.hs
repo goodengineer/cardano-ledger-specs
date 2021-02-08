@@ -115,7 +115,7 @@ type FamsFrom era =
     DecodeMint (Value era),
     Val (Value era), -- Arises because we use 'zero' as the 'mint' field in 'initial'
     FromCBOR (Value era),
-    FromCBOR (Annotator (Script era)) -- Arises becaause DCert memoizes its bytes
+    FromCBOR (Annotator (Script era)) -- Arises because DCert memoizes its bytes
   )
 
 type FamsTo era =
