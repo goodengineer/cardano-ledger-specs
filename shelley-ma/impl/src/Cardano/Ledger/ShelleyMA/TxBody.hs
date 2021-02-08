@@ -239,7 +239,7 @@ initial =
     zero
 
 -- ===========================================================================
--- Wrap it all up in a newtype, hiding the insides with a pattern construtor.
+-- Wrap it all up in a newtype, hiding the insides with a pattern constructor.
 
 newtype TxBody e = TxBodyConstr (MemoBytes (TxBodyRaw e))
   deriving (Typeable)
