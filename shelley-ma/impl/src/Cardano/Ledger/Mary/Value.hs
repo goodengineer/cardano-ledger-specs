@@ -167,7 +167,7 @@ instance CC.Crypto crypto => Val (Value crypto) where
     -- sums up :
     -- i) adaWords : the space taken up by the ada amount
     -- ii) numberMulAssets : the space taken by number of words used to store number of non-ada assets in a value
-    -- iii) the space taken up by the rest of the representation (quantities, PIDs, AssetNames, indeces)
+    -- iii) the space taken up by the rest of the representation (quantities, PIDs, AssetNames, indices)
     | otherwise =
       fromIntegral $
         (roundupBytesToWords $ representationSize (snd $ gettriples vv))
