@@ -917,7 +917,7 @@ materialize SingleR x = runCollect x Fail (\ (k,v) _ignore -> Single k v)
 
 -- ================================================================================
 -- On the flip side, a witness can be used to specifiy how to build a datatype from
--- a CONCRETE sequence of tuples (a [(k,v)]). This is a way to import a type from from
+-- a CONCRETE sequence of tuples (a [(k,v)]). This is a way to import a type from
 --  a list. But unlike 'materialize' an arbitray [(k,v)] may have duplicate keys,
 --  so when that happens, use 'combine' to merge the associated values.
 -- ================================================================================
@@ -994,7 +994,7 @@ data Query k v where
 -- ======================================================================================
 
 smart :: Bool
-smart = True  -- for debugging purposes, this can be set to False, in which case no rewrites occurr.
+smart = True  -- for debugging purposes, this can be set to False, in which case no rewrites occur.
 
 projD ::  Ord k => Query k v -> Fun (k -> v -> u) -> Query k u
 projD x y = case (x,y) of
