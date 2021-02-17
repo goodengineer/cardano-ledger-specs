@@ -1,6 +1,5 @@
 #include <iostream>
 #include <random>
-
 #include <gmpxx.h>
 
 // create random number numbers for golden tests to test all functions
@@ -21,13 +20,8 @@ int main()
   size_t n;
   std::cin >> n;
 
-  const double l = 0.0000000000001;
-  const double u = 1.0;
-
-  const double l_x = 0.1;
-  const double u_x = 100.0;
-  std::uniform_real_distribution<double> uniform(l, u);
-  std::uniform_real_distribution<double> uniform_x(l_x, u_x);
+  const double l = 0.0000000000001,u = 1.0,l_x = 0.1,u_x = 100.0;
+  std::uniform_real_distribution<double> uniform(l, u),uniform_x(l_x, u_x);
   std::default_random_engine generator;
 
   for (size_t i = 0; i < n; i++)
